@@ -21,37 +21,57 @@ class Login_win:
 
     def __init__(self):
         self.win = tk.Tk()
+        # tk.StringVar() 同时保证了值的变更随时可以显示在界面上
         self.user = tk.StringVar()
         self.pwd = tk.StringVar()
 
-        self.win.geometry("320x240")
+        # 总窗口配置
+        self.win.geometry("440x280")
         self.win.title("登录")
-        self.win.resizable(width=False, height=False)
+        # 设置窗口是否可变长、宽，True：可变，False：不可变
+        self.win.resizable(width=True, height=True)
+        # 设置背景颜色
+        self.win.configure(background="#D1EDE1")
 
+        # 左侧 账号文本 配置
         self.label1 = tk.Label(self.win)
         self.label1.place(relx=0.055, rely=0.1, height=31, width=89)
         self.label1.configure(text='账号')
+        # 设置背景颜色
+        self.label1.configure(background="#7BC5AE")
 
+        # 用户账号输入文本框 配置
         self.entry_user = tk.Entry(self.win)
         self.entry_user.place(relx=0.28, rely=0.11, height=26, relwidth=0.554)
         self.entry_user.configure(textvariable=self.user)
+        # 设置背景颜色
+        self.entry_user.configure(background="#D1EDE9")
 
+        # 左侧 密码文本 配置
         self.label2 = tk.Label(self.win)
         self.label2.place(relx=0.055, rely=0.27, height=31, width=89)
         self.label2.configure(text='密码')
+        # 设置背景颜色
+        self.label2.configure(background="#7BC5AE")
 
+        # 用户密码输入文本框 配置
         self.entry_pwd = tk.Entry(self.win)
         self.entry_pwd.place(relx=0.28, rely=0.28, height=26, relwidth=0.554)
         self.entry_pwd.configure(show="*")
         self.entry_pwd.configure(textvariable=self.pwd)
+        self.entry_pwd.configure(background="#D1EDE9")
 
+        # 登录按钮 配置
         self.btn_login = tk.Button(self.win)
         self.btn_login.place(relx=0.13, rely=0.6, height=32, width=88)
         self.btn_login.configure(text='登录')
+        self.btn_login.configure(background="#7BC5AE")
 
+        # 注册按钮 配置
         self.btn_reg = tk.Button(self.win)
         self.btn_reg.place(relx=0.6, rely=0.6, height=32, width=88)
         self.btn_reg.configure(text='注册')
+        self.btn_reg.configure(background="#7BC5AE")
 
 # 聊天窗口界面
 # 功能描述：基于tkinter模块搭建，含有其他已登录用户列表显示框、聊天记录显示框、发送消息输入框、发送消息按钮等。
@@ -68,7 +88,9 @@ class Main_win:
             pass
         self.win.destroy()
 
+    # 构造方法，参数为按钮事件处理函数，从客户端main传进来，可以实现按钮回调
     def __init__(self):
+        # 初始化参数实例变量
         self.win = tk.Tk()
         self.win.protocol('WM_DELETE_WINDOW', self.destroy)
         self.win.geometry("480x320")
@@ -106,7 +128,7 @@ class Main_win:
         self.label2.place(relx=0.24, rely=0.0, height=57, width=140)
         self.label2.configure(textvariable=self.name)
 
-# 客户端相关函数
+# 声明全局变量方便，在静态函数重调用
 login_win = None
 main_win = None
 my_socket = None
@@ -120,6 +142,7 @@ file_transfer_pending = False
 server_ip = "127.0.0.1"
 server_port = "8888"
 
+# 客户端相关函数
 # 功能描述：刷新所有已登录用户列表：当开启聊天页面或收到服务端发来的新用户登录/登出的消息时刷新用户列表。
 # 功能描述：将聊天记录加入聊天记录显示框。当用户刚登录时显示世界聊天聊天记录，当用户点击其他用户与其一对一聊天时显示与其的聊天记录。
 # 功能描述：当点击用户列表中的某用户时，显示与其一对一聊天的窗口。
@@ -301,14 +324,12 @@ def refresh_user_list():
             name += ' (*)'
         main_win.user_list.insert('end', name)
 
-
 def append_history(sender, time, msg):
     main_win.history['state'] = 'normal'
     main_win.history.insert('end', '%s - %s\n' % (sender, time))
     main_win.history.insert('end', msg + '\n\n', 'text')
     main_win.history.see('end')
     main_win.history['state'] = 'disabled'
-
 
 def on_btn_file_clicked():
     global my_socket, main_win, filename, filename_short, file_transfer_pending
@@ -333,7 +354,6 @@ def on_btn_file_clicked():
         file_transfer_pending = True
     except:
         sys.exit(1)
-
 
 def on_btn_send_clicked():
     global my_socket, user_name, current_session, main_win
