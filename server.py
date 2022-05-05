@@ -15,6 +15,7 @@ def load_users():
     except:
         return {}
 
+
 # 功能描述：注册用户
 def register(usr, pwd):
     if usr not in users.keys():
