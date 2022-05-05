@@ -14,6 +14,7 @@ import utils
 class Login_win:
 
     def show(self):
+        # 进入消息循环
         self.win.mainloop()
 
     def destroy(self):
@@ -79,6 +80,7 @@ class Main_win:
     closed_fun = None
 
     def show(self):
+        # 进入消息循环
         self.win.mainloop()
 
     def destroy(self):
@@ -95,7 +97,7 @@ class Main_win:
         self.win.protocol('WM_DELETE_WINDOW', self.destroy)
         self.win.geometry("480x320")
         self.win.title("聊天室")
-        self.win.resizable(width=False,height=False)
+        self.win.resizable(width=True,height=True)
 
         self.msg = tk.StringVar()
         self.name = tk.StringVar()
@@ -105,7 +107,7 @@ class Main_win:
 
         self.label1 = tk.Label(self.win)
         self.label1.place(relx=0.76, rely=0.075, height=21, width=101)
-        self.label1.configure(text='在线用户列表')
+        self.label1.configure(text='在线用户')
 
         self.history = tk.Text(self.win)
         self.history.place(relx=0.02, rely=0.24, relheight=0.63, relwidth=0.696)
@@ -247,9 +249,11 @@ def recv_async():
                 utils.send(my_socket, {'cmd': 'file_accept', 'peer': data['peer']})
                 try:
                     total_bytes = 0
-                    addr = ('0.0.0.0', 1031)
+                    addr = ('127.0.0.1', 44444)
                     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     server.bind(addr)
+                    # 创建也需要时间和消耗系统资源，这样就会影响高并发的性能
+                    # 提前准备5个挂起的连接，用不用，先放那，用的时候直接取即可
                     server.listen(5)
                     client_socket, addr = server.accept()
                     starttime = time.time()
@@ -287,7 +291,7 @@ def recv_async():
             try:
                 total_bytes = 0
                 starttime = time.time()
-                addr = (data['ip'], 1031)
+                addr = (data['ip'], 44444)
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client.connect(addr)
                 with open(filename, 'rb') as f:

@@ -6,7 +6,6 @@ import json
 max_buff_size = 1024
 key = b'fdj27pFJ992FkHQb'
 
-# 加密解密函数
 # 功能描述: encrypt函数对数据进行加密
 def encrypt(data):
     code = Random.new().read(AES.block_size)

@@ -11,10 +11,11 @@ history = None
 def load_users():
     # 读取文件
     try:
+        # r是读取⼈⼯书写的数据，书写的时候是什么样⼦，读出来就是什么样。
+        # rb是读取⼆进制⽂件，⾮⼈⼯书写的数据如.jpeg等这些
         return pickle.load(open('users.dat', 'rb'))
     except:
         return {}
-
 
 # 功能描述：注册用户
 def register(usr, pwd):
@@ -33,6 +34,8 @@ def validate(usr, pwd):
 
 # 功能描述：将所有已注册用户的信息保存到文件中。
 def save_users():
+    # wb仅对应字节写
+    # w仅对应字符串写
     pickle.dump(users, open('users.dat', 'wb'))
 
 # 聊天记录管理相关函数
@@ -70,25 +73,27 @@ def get_history(sender, receiver):
 def save_history():
     pickle.dump(history, open('history.dat', 'wb'))
 
-# 功能描述：服务端采用socketserver的BaseRequestHandler类，可自动处理并发请求。
+
+# BaseRequestHandler类,可自动处理并发请求。
 # 每有一个客户端请求连接时，都会new一个BaseRequestHandler类，然后在一个线程中处理相关请求。
-# 服务端能处理登录请求、注册请求、获取所有已登录用户的列表、获取连接中的用户与其他用户的聊天记录。
-# 将连接中的用户的消息发给其期望接收的用户、将连接中的用户的发送文件请求发给其期望接收的用户。
 class Handler(socketserver.BaseRequestHandler):
     clients = {}
 
-    # 功能描述：
     def setup(self):
         self.user = ''
         self.file_peer = ''
         self.authed = False
 
-
     def handle(self):
         while True:
+            # 每次处理一个请求，每轮询间隔秒关闭，直到关机。
             data = utils.recv(self.request)
+            # print("data")
+            # print(data)
+            # 未认证
             if not self.authed:
                 self.user = data['user']
+                # 服务端处理登录请求、注册请求、获取所有已登录用户的列表、获取连接中的用户与其他用户的聊天记录。
                 if data['cmd'] == 'login':
                     if validate(data['user'], data['pwd']):
                         utils.send(self.request, {'response': 'ok'})
@@ -98,20 +103,24 @@ class Handler(socketserver.BaseRequestHandler):
                         Handler.clients[self.user] = self
                     else:
                         utils.send(self.request, {'response': 'fail', 'reason': '账号或密码错误！'})
+                # 服务端处理注册请求
                 elif data['cmd'] == 'register':
                     if register(data['user'], data['pwd']):
                         utils.send(self.request, {'response': 'ok'})
                     else:
                         utils.send(self.request, {'response': 'fail', 'reason': '账号已存在！'})
             else:
+                # 服务端获取所有已登录用户的列表
                 if data['cmd'] == 'get_users':
                     users = []
                     for user in Handler.clients.keys():
                         if user != self.user:
                             users.append(user)
                     utils.send(self.request, {'type': 'get_users', 'data': users})
+                # 服务端获取连接中的用户与其他用户的聊天记录。
                 elif data['cmd'] == 'get_history':
                     utils.send(self.request, {'type': 'get_history', 'peer': data['peer'], 'data': get_history(self.user, data['peer'])})
+                # 将连接中的用户的消息发给其期望接收的用户。
                 elif data['cmd'] == 'chat' and data['peer'] != '':
                     utils.send(Handler.clients[data['peer']].request, {'type': 'msg', 'peer': self.user, 'msg': data['msg']})
                     append_history(self.user, data['peer'], data['msg'])
@@ -120,6 +129,7 @@ class Handler(socketserver.BaseRequestHandler):
                         if user != self.user:
                             utils.send(Handler.clients[user].request, {'type': 'broadcast', 'peer': self.user, 'msg': data['msg']})
                     append_history(self.user, '', data['msg'])
+                # 将连接中的用户的发送文件请求发给其期望接收的用户。
                 elif data['cmd'] == 'file_request':
                     Handler.clients[data['peer']].file_peer = self.user
                     utils.send(Handler.clients[data['peer']].request, {'type': 'file_request', 'peer': self.user, 'filename': data['filename'], 'size': data['size'], 'md5': data['md5']})
@@ -145,6 +155,7 @@ class Handler(socketserver.BaseRequestHandler):
 if __name__ == '__main__':
     users = load_users()
     history = load_history()
-
-    app = socketserver.ThreadingTCPServer(('0.0.0.0', 8888), Handler)
+    # 能处理并发请求的服务端。服务端能处理并发请求，每当有客户端请求连接时，服务端都会开启一个线程进行处理。
+    # 因此当有多个客户端同时请求服务时不会造成阻塞。
+    app = socketserver.ThreadingTCPServer(('127.0.0.1', 8888), Handler)
     app.serve_forever()
