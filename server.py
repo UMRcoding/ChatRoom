@@ -88,8 +88,6 @@ class Handler(socketserver.BaseRequestHandler):
         while True:
             # 每次处理一个请求，每轮询间隔秒关闭，直到关机。
             data = utils.recv(self.request)
-            # print("data")
-            # print(data)
             # 未认证
             if not self.authed:
                 self.user = data['user']
@@ -99,6 +97,7 @@ class Handler(socketserver.BaseRequestHandler):
                         utils.send(self.request, {'response': 'ok'})
                         self.authed = True
                         for user in Handler.clients.keys():
+                            # 加入在线列表
                             utils.send(Handler.clients[user].request, {'type': 'peer_joined', 'peer': self.user})
                         Handler.clients[self.user] = self
                     else:
@@ -124,11 +123,14 @@ class Handler(socketserver.BaseRequestHandler):
                 elif data['cmd'] == 'chat' and data['peer'] != '':
                     utils.send(Handler.clients[data['peer']].request, {'type': 'msg', 'peer': self.user, 'msg': data['msg']})
                     append_history(self.user, data['peer'], data['msg'])
+                # 全局广播
                 elif data['cmd'] == 'chat' and data['peer'] == '':
                     for user in Handler.clients.keys():
                         if user != self.user:
+                            # 广播
                             utils.send(Handler.clients[user].request, {'type': 'broadcast', 'peer': self.user, 'msg': data['msg']})
                     append_history(self.user, '', data['msg'])
+
                 # 将连接中的用户的发送文件请求发给其期望接收的用户。
                 elif data['cmd'] == 'file_request':
                     Handler.clients[data['peer']].file_peer = self.user
@@ -158,4 +160,8 @@ if __name__ == '__main__':
     # 能处理并发请求的服务端。服务端能处理并发请求，每当有客户端请求连接时，服务端都会开启一个线程进行处理。
     # 因此当有多个客户端同时请求服务时不会造成阻塞。
     app = socketserver.ThreadingTCPServer(('127.0.0.1', 8888), Handler)
+    # Handle one request at a time until shutdown
     app.serve_forever()
+
+
+

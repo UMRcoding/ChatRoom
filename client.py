@@ -145,17 +145,12 @@ server_ip = "127.0.0.1"
 server_port = "8888"
 
 # 客户端相关函数
-# 功能描述：刷新所有已登录用户列表：当开启聊天页面或收到服务端发来的新用户登录/登出的消息时刷新用户列表。
-# 功能描述：将聊天记录加入聊天记录显示框。当用户刚登录时显示世界聊天聊天记录，当用户点击其他用户与其一对一聊天时显示与其的聊天记录。
-# 功能描述：当点击用户列表中的某用户时，显示与其一对一聊天的窗口。
-# 功能描述：接收服务端消息函数。该函数运行在一个独立的线程中，不断接收服务端发来的消息。
 def close_socket():
     utils.send(my_socket, {'cmd': 'close'})
     my_socket.shutdown(2)
     my_socket.close()
 
 # 功能描述：登录按钮点击事件：当登录按钮点击时向服务端请求登录，如果登录成功则关闭登录页面，开启聊天页面。
-# 功能描述：注册按钮点击事件：当注册按钮点击时向服务端请求注册，得到回应后显示回应的消息（注册成功或注册失败、账号已存在等消息）。
 def on_btn_login_clicked():
     global my_socket, user_name, login_win, main_win
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -166,15 +161,19 @@ def on_btn_login_clicked():
         server_response = utils.recv(my_socket)
         if server_response['response'] == 'ok':
             user_name = login_win.user.get()
+            # 销毁登录框
             login_win.destroy()
             main_win = Main_win()
             main_win.closed_fun = on_closed
-            main_win.name.set('Hi!\n%s' % user_name)
+
+            # 置顶欢迎
+            main_win.name.set('上午好!   %s' % user_name)
             main_win.btn_file.configure(command=on_btn_file_clicked)
             main_win.btn_send.configure(command=on_btn_send_clicked)
             main_win.user_list.bind('<<ListboxSelect>>', on_session_select)
             utils.send(my_socket, {'cmd': 'get_users'})
             utils.send(my_socket, {'cmd': 'get_history', 'peer': ''})
+
             t = threading.Thread(target=recv_async, args=())
             t.setDaemon(True)
             t.start()
@@ -185,7 +184,7 @@ def on_btn_login_clicked():
     else:
         tkinter.messagebox.showerror('警告', '账号和密码不能为空！')
 
-
+# 功能描述：注册按钮点击事件：当注册按钮点击时向服务端请求注册，得到回应后显示回应的消息（注册成功或注册失败、账号已存在等消息）。
 def on_btn_reg_clicked():
     global my_socket, login_win
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -206,22 +205,28 @@ def on_btn_reg_clicked():
 def recv_async():
     global my_socket, users, main_win, current_session, file_transfer_pending, filename_short, filename
     while True:
+        # 点击用户列表中的某用户时，显示与其一对一聊天的窗口。
         data = utils.recv(my_socket)
+        # 功能描述：刷新所有已登录用户列表：当开启聊天页面或收到服务端发来的新用户登录/登出的消息时刷新用户列表。
         if data['type'] == 'get_users':
             users = {}
             for user in [''] + data['data']:
                 users[user] = False
             refresh_user_list()
+        # 功能描述：将聊天记录加入聊天记录显示框。
         elif data['type'] == 'get_history':
             if data['peer'] == current_session:
+                # 历史记录管理
                 main_win.history['state'] = 'normal'
                 main_win.history.delete('1.0', 'end')
                 main_win.history['state'] = 'disabled'
                 for entry in data['data']:
                     append_history(entry[0], entry[1], entry[2])
+        # 功能描述：当用户刚登录时显示世界聊天聊天记录，当用户点击其他用户与其一对一聊天时显示与其的聊天记录。
         elif data['type'] == 'peer_joined':
             users[data['peer']] = False
             refresh_user_list()
+        # 功能描述：接收服务端消息函数。该函数运行在一个独立的线程中，不断接收服务端发来的消息。
         elif data['type'] == 'peer_left':
             if data['peer'] in users.keys():
                 del users[data['peer']]
@@ -324,6 +329,7 @@ def refresh_user_list():
     main_win.user_list.delete(0, 'end')
     for user in users.keys():
         name = '世界聊天室' if user == '' else user
+        # 未读
         if users[user]:
             name += ' (*)'
         main_win.user_list.insert('end', name)
