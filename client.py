@@ -154,7 +154,7 @@ def close_socket():
 def on_btn_login_clicked():
     global my_socket, user_name, login_win, main_win
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    my_socket.settimeout(10)
+    my_socket.settimeout(5)
     if login_win.user.get() != '' and login_win.pwd != '':
         my_socket.connect((server_ip, int(server_port)))
         # 请求服务端
@@ -176,7 +176,6 @@ def on_btn_login_clicked():
             utils.send(my_socket, {'cmd': 'get_users'})
             utils.send(my_socket, {'cmd': 'get_history', 'peer': ''})
 
-            time.sleep(0.5)
             t = threading.Thread(target=recv_async, args=())
             # 通过setDaemon(true)来设置线程为守护线程。
             t.setDaemon(True)
@@ -192,7 +191,7 @@ def on_btn_login_clicked():
 def on_btn_reg_clicked():
     global my_socket, login_win
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    my_socket.settimeout(10)
+    my_socket.settimeout(5)
     # 注册服务
     if login_win.user.get() != '' and login_win.pwd.get() != '':
         my_socket.connect((server_ip, int(server_port)))
@@ -259,7 +258,7 @@ def recv_async():
                 utils.send(my_socket, {'cmd': 'file_accept', 'peer': data['peer']})
                 try:
                     total_bytes = 0
-                    addr = ('8.210.58.76', 8888)
+                    addr = ('127.0.0.1', 44444)
                     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     server.bind(addr)
                     # 创建也需要时间和消耗系统资源，这样就会影响高并发的性能
@@ -301,9 +300,8 @@ def recv_async():
             try:
                 total_bytes = 0
                 starttime = time.time()
-                addr = (data['ip'], 8888)
+                addr = (data['ip'], 44444)
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                time.sleep(0.5)
                 client.connect(addr)
                 with open(filename, 'rb') as f:
                     while True:
