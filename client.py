@@ -134,7 +134,6 @@ current_session = ''
 users = {}
 filename = ''
 filename_short = ''
-file_transfer_pending = False
 
 server_ip = "127.0.0.1"
 server_port = "8888"
@@ -147,6 +146,9 @@ def close_socket():
     utils.send(my_socket, {'cmd': 'close'})
     my_socket.shutdown(2)
     my_socket.close()
+
+def on_closed():
+    close_socket()
 
 # 功能描述：登录按钮点击事件：当登录按钮点击时向服务端请求登录，如果登录成功则关闭登录页面，开启聊天页面。
 def on_btn_login_clicked():
@@ -199,9 +201,8 @@ def on_btn_reg_clicked():
         tkinter.messagebox.showerror('警告', '账号和密码不能为空！')
     close_socket()
 
-
 def recv_async():
-    global my_socket, users, main_win, current_session, file_transfer_pending, filename_short, filename
+    global my_socket, users, main_win, current_session, filename_short, filename
     while True:
         # 点击用户列表中的某用户时，显示与其一对一聊天的窗口。
         data = utils.recv(my_socket)
@@ -272,9 +273,8 @@ def on_btn_send_clicked():
     else:
         tkinter.messagebox.showinfo('警告', '消息不能为空！')
 
-
 def on_session_select(event):
-    global current_session, main_win, user_name, users, file_transfer_pending
+    global current_session, main_win, user_name, users
     w = event.widget
     changed = False
     if len(w.curselection()) != 0:
@@ -296,8 +296,6 @@ def on_session_select(event):
         if changed:
             utils.send(my_socket, {'cmd': 'get_history', 'peer': current_session})
 
-def on_closed():
-    close_socket()
 
 if __name__ == '__main__':
     login_win = Login_win()
