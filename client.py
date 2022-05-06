@@ -141,8 +141,11 @@ filename = ''
 filename_short = ''
 file_transfer_pending = False
 
-server_ip = "127.0.0.1"
-server_port = "8888"
+# server_ip = "127.0.0.1"
+# server_port = "8888"
+
+server_ip = "8.210.58.76"
+server_port = "18899"
 
 # 客户端相关函数
 def close_socket():
