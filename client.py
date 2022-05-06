@@ -136,8 +136,6 @@ server_port = "8888"
 # server_ip = "8.210.58.76"
 # server_port = "18899"
 
-def on_closed():
-    close_socket()
 
 # 客户端相关函数
 def close_socket():
@@ -161,7 +159,7 @@ def on_btn_login_clicked():
             # 销毁登录框
             login_win.destroy()
             main_win = Main_win()
-            main_win.closed_fun = on_closed
+            main_win.closed_fun = close_socket
 
             # 置顶欢迎
             main_win.name.set('上午好!   %s' % user_name)

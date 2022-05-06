@@ -23,6 +23,7 @@ def pack(data):
     return struct.pack('>H', len(data)) + data
 
 def send(socket, data_dict):
+    # json.dumps将一个Python数据结构转换为JSON
     socket.send(pack(encrypt(json.dumps(data_dict).encode('utf-8'))))
 
 # 功能描述：接收数据时先接收这个二字节数，获取将要接收的数据包的大小，然后接收这个大小的数据作为本次接收的数据包。
@@ -36,4 +37,5 @@ def recv(socket):
         data += recv_data
         surplus -= len(recv_data)
     socket.settimeout(None)
+    print(json.loads(decrypt(data)))
     return json.loads(decrypt(data))
