@@ -150,13 +150,14 @@ def close_socket():
     my_socket.shutdown(2)
     my_socket.close()
 
-# 功能描述：登录按钮点击事件：当登录按钮点击时向服务端请求登录，如果登录成功则关闭登录页面，开启聊天页面。
+# 功能描述：当登录按钮点击时向服务端请求登录，如果登录成功则关闭登录页面，开启聊天页面。
 def on_btn_login_clicked():
     global my_socket, user_name, login_win, main_win
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     my_socket.settimeout(5)
     if login_win.user.get() != '' and login_win.pwd != '':
         my_socket.connect((server_ip, int(server_port)))
+        # 请求服务端
         utils.send(my_socket, {'cmd': 'login', 'user': login_win.user.get(), 'pwd': hashlib.sha1(login_win.pwd.get().encode('utf-8')).hexdigest()})
         server_response = utils.recv(my_socket)
         if server_response['response'] == 'ok':
@@ -171,10 +172,12 @@ def on_btn_login_clicked():
             main_win.btn_file.configure(command=on_btn_file_clicked)
             main_win.btn_send.configure(command=on_btn_send_clicked)
             main_win.user_list.bind('<<ListboxSelect>>', on_session_select)
+
             utils.send(my_socket, {'cmd': 'get_users'})
             utils.send(my_socket, {'cmd': 'get_history', 'peer': ''})
 
             t = threading.Thread(target=recv_async, args=())
+            # 通过setDaemon(true)来设置线程为守护线程。
             t.setDaemon(True)
             t.start()
             main_win.show()
@@ -189,6 +192,7 @@ def on_btn_reg_clicked():
     global my_socket, login_win
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     my_socket.settimeout(5)
+    # 注册服务
     if login_win.user.get() != '' and login_win.pwd.get() != '':
         my_socket.connect((server_ip, int(server_port)))
         utils.send(my_socket, {'cmd': 'register', 'user': login_win.user.get(), 'pwd': hashlib.sha1(login_win.pwd.get().encode('utf-8')).hexdigest()})
@@ -420,6 +424,8 @@ def get_file_md5(file_path):
 
 if __name__ == '__main__':
     login_win = Login_win()
+    # 登录按钮点击事件
     login_win.btn_login.configure(command=on_btn_login_clicked)
+    # 注册按钮点击事件
     login_win.btn_reg.configure(command=on_btn_reg_clicked)
     login_win.show()
