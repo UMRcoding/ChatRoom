@@ -5,14 +5,11 @@ import threading
 import hashlib
 import socket
 import time
-import sys
-import os
 
 import utils
 # 登录界面
 # 功能描述：基于tkinter模块搭建，含有账号输入框、密码输入框、登录按钮、注册按钮。
 class Login_win:
-
     def show(self):
         # 进入消息循环
         self.win.mainloop()
@@ -92,7 +89,7 @@ class Main_win:
 
     # 构造方法，参数为按钮事件处理函数，从客户端main传进来，可以实现按钮回调
     def __init__(self):
-        # 初始化参数实例变量
+        # 初始化参数实例变量，聊天室主页面
         self.win = tk.Tk()
         self.win.protocol('WM_DELETE_WINDOW', self.destroy)
         self.win.geometry("480x320")
@@ -132,8 +129,6 @@ my_socket = None
 user_name = ''
 current_session = ''
 users = {}
-filename = ''
-filename_short = ''
 
 server_ip = "127.0.0.1"
 server_port = "8888"
@@ -141,14 +136,15 @@ server_port = "8888"
 # server_ip = "8.210.58.76"
 # server_port = "18899"
 
+def on_closed():
+    close_socket()
+
 # 客户端相关函数
 def close_socket():
     utils.send(my_socket, {'cmd': 'close'})
     my_socket.shutdown(2)
     my_socket.close()
 
-def on_closed():
-    close_socket()
 
 # 功能描述：登录按钮点击事件：当登录按钮点击时向服务端请求登录，如果登录成功则关闭登录页面，开启聊天页面。
 def on_btn_login_clicked():
@@ -202,7 +198,7 @@ def on_btn_reg_clicked():
     close_socket()
 
 def recv_async():
-    global my_socket, users, main_win, current_session, filename_short, filename
+    global my_socket, users, main_win, current_session
     while True:
         # 点击用户列表中的某用户时，显示与其一对一聊天的窗口。
         data = utils.recv(my_socket)
@@ -252,7 +248,7 @@ def refresh_user_list():
     main_win.user_list.delete(0, 'end')
     for user in users.keys():
         name = '世界聊天室' if user == '' else user
-        # 未读
+        # 未读消息
         if users[user]:
             name += ' (*)'
         main_win.user_list.insert('end', name)
@@ -295,7 +291,6 @@ def on_session_select(event):
                 refresh_user_list()
         if changed:
             utils.send(my_socket, {'cmd': 'get_history', 'peer': current_session})
-
 
 if __name__ == '__main__':
     login_win = Login_win()
