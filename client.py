@@ -121,11 +121,6 @@ class Main_win:
         self.btn_send.place(relx=0.62, rely=0.89, height=28, width=45)
         self.btn_send.configure(text='发送')
 
-        self.btn_file = tk.Button(self.win)
-        self.btn_file.place(relx=0.752, rely=0.89, height=28, width=108)
-        self.btn_file.configure(text='发送文件')
-        self.btn_file.configure(state='disabled')
-
         self.label2 = tk.Label(self.win)
         self.label2.place(relx=0.24, rely=0.0, height=57, width=140)
         self.label2.configure(textvariable=self.name)
@@ -141,11 +136,11 @@ filename = ''
 filename_short = ''
 file_transfer_pending = False
 
-# server_ip = "127.0.0.1"
-# server_port = "8888"
+server_ip = "127.0.0.1"
+server_port = "8888"
 
-server_ip = "8.210.58.76"
-server_port = "18899"
+# server_ip = "8.210.58.76"
+# server_port = "18899"
 
 # 客户端相关函数
 def close_socket():
@@ -156,6 +151,7 @@ def close_socket():
 # 功能描述：登录按钮点击事件：当登录按钮点击时向服务端请求登录，如果登录成功则关闭登录页面，开启聊天页面。
 def on_btn_login_clicked():
     global my_socket, user_name, login_win, main_win
+    # socket创建socket，客户端和服务端要用socket。AF_INET表示TCP协议族，SOCK_STREAM基于TCP
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     my_socket.settimeout(5)
     if login_win.user.get() != '' and login_win.pwd != '':
@@ -171,7 +167,7 @@ def on_btn_login_clicked():
 
             # 置顶欢迎
             main_win.name.set('上午好!   %s' % user_name)
-            main_win.btn_file.configure(command=on_btn_file_clicked)
+            # main_win.btn_file.configure(command=on_btn_file_clicked)
             main_win.btn_send.configure(command=on_btn_send_clicked)
             main_win.user_list.bind('<<ListboxSelect>>', on_session_select)
             utils.send(my_socket, {'cmd': 'get_users'})
@@ -235,7 +231,6 @@ def recv_async():
                 del users[data['peer']]
             if data['peer'] == current_session:
                 current_session = ''
-                main_win.btn_file.configure(state='disabled')
                 main_win.name.set('%s -> global' % user_name)
                 users[''] = False
                 utils.send(my_socket, {'cmd': 'get_history', 'peer': ''})
@@ -288,13 +283,13 @@ def recv_async():
                     pass
             else:
                 utils.send(my_socket, {'cmd': 'file_deny', 'peer': data['peer']})
-        elif data['type'] == 'file_deny':
-            main_win.btn_file.configure(text='发送文件')
-            if current_session == '':
-                main_win.btn_file.configure(state='disabled')
-            else:
-                main_win.btn_file.configure(state='normal')
-            tkinter.messagebox.showinfo('警告', '对方拒绝接收！')
+        # elif data['type'] == 'file_deny':
+        #     main_win.btn_file.configure(text='发送文件')
+        #     if current_session == '':
+        #         main_win.btn_file.configure(state='disabled')
+        #     else:
+        #         main_win.btn_file.configure(state='normal')
+        #     tkinter.messagebox.showinfo('警告', '对方拒绝接收！')
         elif data['type'] == 'file_accept':
             try:
                 total_bytes = 0
@@ -321,11 +316,6 @@ def recv_async():
                 filename = ''
                 filename_short = ''
                 file_transfer_pending = False
-            main_win.btn_file.configure(text='发送文件')
-            if current_session == '':
-                main_win.btn_file.configure(state='disabled')
-            else:
-                main_win.btn_file.configure(state='normal')
             tkinter.messagebox.showinfo('注意', '文件发送成功！')
 
 def refresh_user_list():
@@ -362,8 +352,6 @@ def on_btn_file_clicked():
         size = str(format(size, '.2f')) + ['B', 'KB', 'MB', 'GB', 'TB', 'PB'][count]
         md5_checksum = get_file_md5(filename)
         utils.send(my_socket, {'cmd': 'file_request', 'peer': current_session, 'filename': filename_short, 'size': size, 'md5': md5_checksum})
-        main_win.btn_file.configure(text='等待中...')
-        main_win.btn_file.configure(state='disabled')
         file_transfer_pending = True
     except:
         sys.exit(1)
@@ -388,8 +376,8 @@ def on_session_select(event):
             if current_session != w.get(index).rstrip(' (*)'):
                 changed = True
                 current_session = w.get(index).rstrip(' (*)')
-                if not file_transfer_pending:
-                    main_win.btn_file.configure(state='normal')
+                # if not file_transfer_pending:
+                #     main_win.btn_file.configure(state='normal')
                 main_win.name.set('%s -> %s' % (user_name, current_session))
                 users[current_session] = False
                 refresh_user_list()
@@ -397,7 +385,7 @@ def on_session_select(event):
             if current_session != '':
                 changed = True
                 current_session = ''
-                main_win.btn_file.configure(state='disabled')
+                # main_win.btn_file.configure(state='disabled')
                 main_win.name.set('%s -> global' % user_name)
                 users[''] = False
                 refresh_user_list()
