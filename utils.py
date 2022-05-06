@@ -37,5 +37,4 @@ def recv(socket):
         data += recv_data
         surplus -= len(recv_data)
     socket.settimeout(None)
-    print(json.loads(decrypt(data)))
     return json.loads(decrypt(data))

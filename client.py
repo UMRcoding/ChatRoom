@@ -166,7 +166,7 @@ def on_btn_login_clicked():
             main_win.btn_send.configure(command=on_btn_send_clicked)
             main_win.user_list.bind('<<ListboxSelect>>', on_session_select)
             utils.send(my_socket, {'cmd': 'get_users'})
-            utils.send(my_socket, {'cmd': 'get_history', 'peer': ''})
+            utils.send(my_socket, {'cmd': 'get_history', 'people': ''})
 
             t = threading.Thread(target=recv_async, args=())
             t.setDaemon(True)
@@ -208,7 +208,7 @@ def recv_async():
             refresh_user_list()
         # 功能描述：将聊天记录加入聊天记录显示框。
         elif data['type'] == 'get_history':
-            if data['peer'] == current_session:
+            if data['people'] == current_session:
                 # 历史记录管理
                 main_win.history['state'] = 'normal'
                 main_win.history.delete('1.0', 'end')
@@ -216,28 +216,28 @@ def recv_async():
                 for entry in data['data']:
                     append_history(entry[0], entry[1], entry[2])
         # 功能描述：当用户刚登录时显示世界聊天聊天记录，当用户点击其他用户与其一对一聊天时显示与其的聊天记录。
-        elif data['type'] == 'peer_joined':
-            users[data['peer']] = False
+        elif data['type'] == 'people_joined':
+            users[data['people']] = False
             refresh_user_list()
         # 功能描述：接收服务端消息函数。该函数运行在一个独立的线程中，不断接收服务端发来的消息。
-        elif data['type'] == 'peer_left':
-            if data['peer'] in users.keys():
-                del users[data['peer']]
-            if data['peer'] == current_session:
+        elif data['type'] == 'people_left':
+            if data['people'] in users.keys():
+                del users[data['people']]
+            if data['people'] == current_session:
                 current_session = ''
-                main_win.name.set('%s -> global' % user_name)
+                main_win.name.set('%s -> 世界聊天' % user_name)
                 users[''] = False
-                utils.send(my_socket, {'cmd': 'get_history', 'peer': ''})
+                utils.send(my_socket, {'cmd': 'get_history', 'people': ''})
             refresh_user_list()
         elif data['type'] == 'msg':
-            if data['peer'] == current_session:
-                append_history(data['peer'], time.strftime('%m月%d日%H:%M', time.localtime(time.time())), data['msg'])
+            if data['people'] == current_session:
+                append_history(data['people'], time.strftime('%m月%d日%H:%M', time.localtime(time.time())), data['msg'])
             else:
-                users[data['peer']] = True
+                users[data['people']] = True
                 refresh_user_list()
         elif data['type'] == 'broadcast':
             if current_session == '':
-                append_history(data['peer'], time.strftime('%m月%d日%H:%M', time.localtime(time.time())), data['msg'])
+                append_history(data['people'], time.strftime('%m月%d日%H:%M', time.localtime(time.time())), data['msg'])
             else:
                 users[''] = True
                 refresh_user_list()
@@ -261,7 +261,7 @@ def append_history(sender, time, msg):
 def on_btn_send_clicked():
     global my_socket, user_name, current_session, main_win
     if main_win.msg.get() != '':
-        utils.send(my_socket, {'cmd': 'chat', 'peer': current_session, 'msg': main_win.msg.get()})
+        utils.send(my_socket, {'cmd': 'chat', 'people': current_session, 'msg': main_win.msg.get()})
         append_history(user_name, time.strftime('%m月%d日%H:%M', time.localtime(time.time())), main_win.msg.get())
         main_win.msg.set('')
     else:
@@ -288,7 +288,7 @@ def on_session_select(event):
                 users[''] = False
                 refresh_user_list()
         if changed:
-            utils.send(my_socket, {'cmd': 'get_history', 'peer': current_session})
+            utils.send(my_socket, {'cmd': 'get_history', 'people': current_session})
 
 if __name__ == '__main__':
     login_win = Login_win()

@@ -68,11 +68,9 @@ def get_history(sender, receiver):
         key = get_key(sender, receiver)
     return history[key] if key in history.keys() else []
 
-
 # 功能描述：将所有用户的所有聊天记录保存到文件中。
 def save_history():
     pickle.dump(history, open('history.dat', 'wb'))
-
 
 # BaseRequestHandler类,可自动处理并发请求。
 # 每有一个客户端请求连接时，都会new一个BaseRequestHandler类，然后在一个线程中处理相关请求。
@@ -81,7 +79,7 @@ class Handler(socketserver.BaseRequestHandler):
 
     def setup(self):
         self.user = ''
-        self.file_peer = ''
+        self.file_people = ''
         self.authed = False
 
     def handle(self):
@@ -98,7 +96,7 @@ class Handler(socketserver.BaseRequestHandler):
                         self.authed = True
                         for user in Handler.clients.keys():
                             # 加入在线列表
-                            utils.send(Handler.clients[user].request, {'type': 'peer_joined', 'peer': self.user})
+                            utils.send(Handler.clients[user].request, {'type': 'people_joined', 'people': self.user})
                         Handler.clients[self.user] = self
                     else:
                         utils.send(self.request, {'response': 'fail', 'reason': '账号或密码错误！'})
@@ -118,29 +116,18 @@ class Handler(socketserver.BaseRequestHandler):
                     utils.send(self.request, {'type': 'get_users', 'data': users})
                 # 服务端获取连接中的用户与其他用户的聊天记录。
                 elif data['cmd'] == 'get_history':
-                    utils.send(self.request, {'type': 'get_history', 'peer': data['peer'], 'data': get_history(self.user, data['peer'])})
+                    utils.send(self.request, {'type': 'get_history', 'people': data['people'], 'data': get_history(self.user, data['people'])})
                 # 将连接中的用户的消息发给其期望接收的用户。
-                elif data['cmd'] == 'chat' and data['peer'] != '':
-                    utils.send(Handler.clients[data['peer']].request, {'type': 'msg', 'peer': self.user, 'msg': data['msg']})
-                    append_history(self.user, data['peer'], data['msg'])
+                elif data['cmd'] == 'chat' and data['people'] != '':
+                    utils.send(Handler.clients[data['people']].request, {'type': 'msg', 'people': self.user, 'msg': data['msg']})
+                    append_history(self.user, data['people'], data['msg'])
                 # 全局广播
-                elif data['cmd'] == 'chat' and data['peer'] == '':
+                elif data['cmd'] == 'chat' and data['people'] == '':
                     for user in Handler.clients.keys():
                         if user != self.user:
                             # 广播
-                            utils.send(Handler.clients[user].request, {'type': 'broadcast', 'peer': self.user, 'msg': data['msg']})
+                            utils.send(Handler.clients[user].request, {'type': 'broadcast', 'people': self.user, 'msg': data['msg']})
                     append_history(self.user, '', data['msg'])
-
-                # 将连接中的用户的发送文件请求发给其期望接收的用户。
-                elif data['cmd'] == 'file_request':
-                    Handler.clients[data['peer']].file_peer = self.user
-                    utils.send(Handler.clients[data['peer']].request, {'type': 'file_request', 'peer': self.user, 'filename': data['filename'], 'size': data['size'], 'md5': data['md5']})
-                elif data['cmd'] == 'file_deny' and data['peer'] == self.file_peer:
-                    self.file_peer = ''
-                    utils.send(Handler.clients[data['peer']].request, {'type': 'file_deny', 'peer': self.user})
-                elif data['cmd'] == 'file_accept' and data['peer'] == self.file_peer:
-                    self.file_peer = ''
-                    utils.send(Handler.clients[data['peer']].request, {'type': 'file_accept', 'ip': self.client_address[0]})
                 elif data['cmd'] == 'close':
                     self.finish()
 
@@ -151,7 +138,7 @@ class Handler(socketserver.BaseRequestHandler):
             if self.user in Handler.clients.keys():
                 del Handler.clients[self.user]
             for user in Handler.clients.keys():
-                utils.send(Handler.clients[user].request, {'type': 'peer_left', 'peer': self.user})
+                utils.send(Handler.clients[user].request, {'type': 'people_left', 'people': self.user})
 
 
 if __name__ == '__main__':
@@ -162,6 +149,4 @@ if __name__ == '__main__':
     app = socketserver.ThreadingTCPServer(('127.0.0.1', 8888), Handler)
     # Handle one request at a time until shutdown
     app.serve_forever()
-
-
 
