@@ -167,7 +167,6 @@ def on_btn_login_clicked():
 
             # 置顶欢迎
             main_win.name.set('上午好!   %s' % user_name)
-            # main_win.btn_file.configure(command=on_btn_file_clicked)
             main_win.btn_send.configure(command=on_btn_send_clicked)
             main_win.user_list.bind('<<ListboxSelect>>', on_session_select)
             utils.send(my_socket, {'cmd': 'get_users'})
@@ -247,76 +246,6 @@ def recv_async():
             else:
                 users[''] = True
                 refresh_user_list()
-        elif data['type'] == 'file_request':
-            if tkinter.messagebox.askyesno('注意', '%s 想要发文件给你\文件名：%s\n大小: %s\n接收?' % (data['peer'], data['filename'], data['size'])):
-                utils.send(my_socket, {'cmd': 'file_accept', 'peer': data['peer']})
-                try:
-                    total_bytes = 0
-                    addr = ('127.0.0.1', 44444)
-                    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    server.bind(addr)
-                    # 创建也需要时间和消耗系统资源，这样就会影响高并发的性能
-                    # 提前准备5个挂起的连接，用不用，先放那，用的时候直接取即可
-                    server.listen(5)
-                    client_socket, addr = server.accept()
-                    starttime = time.time()
-                    with open(data['filename'], "wb") as f:
-                        while True:
-                            fdata = client_socket.recv(1024)
-                            total_bytes += len(fdata)
-                            if not fdata:
-                                break
-                            f.write(fdata)
-                    f.close()
-                    client_socket.close()
-                    server.close()
-                    endtime = time.time()
-                    received_md5 = get_file_md5(data['filename'])
-                    if received_md5 == data['md5']:
-                        tkinter.messagebox.showinfo('注意', '文件接收成功！')
-                    main_win.history['state'] = 'normal'
-                    main_win.history.insert('end', 'Received %s bytes from %s in %s seconds\n\n' % (
-                        total_bytes, data['peer'], format(endtime - starttime, '.2f')), 'hint')
-                    main_win.history.see('end')
-                    main_win.history['state'] = 'disabled'
-                except:
-                    pass
-            else:
-                utils.send(my_socket, {'cmd': 'file_deny', 'peer': data['peer']})
-        # elif data['type'] == 'file_deny':
-        #     main_win.btn_file.configure(text='发送文件')
-        #     if current_session == '':
-        #         main_win.btn_file.configure(state='disabled')
-        #     else:
-        #         main_win.btn_file.configure(state='normal')
-        #     tkinter.messagebox.showinfo('警告', '对方拒绝接收！')
-        elif data['type'] == 'file_accept':
-            try:
-                total_bytes = 0
-                starttime = time.time()
-                addr = (data['ip'], 44444)
-                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client.connect(addr)
-                with open(filename, 'rb') as f:
-                    while True:
-                        fdata = f.read(1024)
-                        if not fdata:
-                            break
-                        total_bytes += len(fdata)
-                        client.send(fdata)
-                f.close()
-                client.close()
-                endtime = time.time()
-                main_win.history['state'] = 'normal'
-                main_win.history.insert('end', 'Sent %s bytes in %s seconds\n\n' % (
-                    total_bytes, format(endtime - starttime, '.2f')), 'hint')
-                main_win.history.see('end')
-                main_win.history['state'] = 'disabled'
-            finally:
-                filename = ''
-                filename_short = ''
-                file_transfer_pending = False
-            tkinter.messagebox.showinfo('注意', '文件发送成功！')
 
 def refresh_user_list():
     main_win.user_list.delete(0, 'end')
@@ -333,28 +262,6 @@ def append_history(sender, time, msg):
     main_win.history.insert('end', msg + '\n\n', 'text')
     main_win.history.see('end')
     main_win.history['state'] = 'disabled'
-
-def on_btn_file_clicked():
-    global my_socket, main_win, filename, filename_short, file_transfer_pending
-    try:
-        filename = tkinter.filedialog.askopenfilename()
-        if filename == '': return
-        filename_short = ''
-        if len(filename.split('/')) < len(filename.split('\\')):
-            filename_short = filename.split('\\')[-1]
-        else:
-            filename_short = filename.split('/')[-1]
-        size = os.path.getsize(filename)
-        count = 0
-        while not 1 < size < 1024 and count < 6:
-            size /= 1024
-            count += 1
-        size = str(format(size, '.2f')) + ['B', 'KB', 'MB', 'GB', 'TB', 'PB'][count]
-        md5_checksum = get_file_md5(filename)
-        utils.send(my_socket, {'cmd': 'file_request', 'peer': current_session, 'filename': filename_short, 'size': size, 'md5': md5_checksum})
-        file_transfer_pending = True
-    except:
-        sys.exit(1)
 
 def on_btn_send_clicked():
     global my_socket, user_name, current_session, main_win
@@ -376,8 +283,6 @@ def on_session_select(event):
             if current_session != w.get(index).rstrip(' (*)'):
                 changed = True
                 current_session = w.get(index).rstrip(' (*)')
-                # if not file_transfer_pending:
-                #     main_win.btn_file.configure(state='normal')
                 main_win.name.set('%s -> %s' % (user_name, current_session))
                 users[current_session] = False
                 refresh_user_list()
@@ -385,7 +290,6 @@ def on_session_select(event):
             if current_session != '':
                 changed = True
                 current_session = ''
-                # main_win.btn_file.configure(state='disabled')
                 main_win.name.set('%s -> global' % user_name)
                 users[''] = False
                 refresh_user_list()
@@ -394,20 +298,6 @@ def on_session_select(event):
 
 def on_closed():
     close_socket()
-
-def get_file_md5(file_path):
-    md5obj = hashlib.md5()
-    maxbuf = 8192
-    f = open(file_path, 'rb')
-    while True:
-        buf = f.read(maxbuf)
-        if not buf:
-            break
-        md5obj.update(buf)
-    f.close()
-    hash = md5obj.hexdigest()
-    return str(hash).upper()
-
 
 if __name__ == '__main__':
     login_win = Login_win()
