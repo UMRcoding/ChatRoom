@@ -8,8 +8,9 @@ import time
 
 import utils
 
-import locale
-locale.setlocale(locale.LC_CTYPE, "English_United States.932")
+#import locale
+#locale.setlocale(locale.LC_CTYPE, "English_United States.932")
+
 # 登录界面
 # 功能描述：基于tkinter模块搭建，含有账号输入框、密码输入框、登录按钮、注册按钮。
 class Login_win:
