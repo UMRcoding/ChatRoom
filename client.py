@@ -7,6 +7,9 @@ import socket
 import time
 
 import utils
+
+import locale
+locale.setlocale(locale.LC_CTYPE, "English_United States.932")
 # 登录界面
 # 功能描述：基于tkinter模块搭建，含有账号输入框、密码输入框、登录按钮、注册按钮。
 class Login_win:
@@ -29,47 +32,47 @@ class Login_win:
         # 设置窗口是否可变长、宽，True：可变，False：不可变
         self.win.resizable(width=True, height=True)
         # 设置背景颜色
-        self.win.configure(background="#D1EDE1")
+        # self.win.configure(background="#D1EDE1")
 
         # 左侧 账号文本 配置
         self.label1 = tk.Label(self.win)
         self.label1.place(relx=0.055, rely=0.1, height=31, width=89)
         self.label1.configure(text='账号')
         # 设置背景颜色
-        self.label1.configure(background="#7BC5AE")
+        # self.label1.configure(background="#7BC5AE")
 
         # 用户账号输入文本框 配置
         self.entry_user = tk.Entry(self.win)
         self.entry_user.place(relx=0.28, rely=0.11, height=26, relwidth=0.554)
         self.entry_user.configure(textvariable=self.user)
         # 设置背景颜色
-        self.entry_user.configure(background="#D1EDE9")
+        # self.entry_user.configure(background="#D1EDE9")
 
         # 左侧 密码文本 配置
         self.label2 = tk.Label(self.win)
         self.label2.place(relx=0.055, rely=0.27, height=31, width=89)
         self.label2.configure(text='密码')
         # 设置背景颜色
-        self.label2.configure(background="#7BC5AE")
+        # self.label2.configure(background="#7BC5AE")
 
         # 用户密码输入文本框 配置
         self.entry_pwd = tk.Entry(self.win)
         self.entry_pwd.place(relx=0.28, rely=0.28, height=26, relwidth=0.554)
         self.entry_pwd.configure(show="*")
         self.entry_pwd.configure(textvariable=self.pwd)
-        self.entry_pwd.configure(background="#D1EDE9")
+        # self.entry_pwd.configure(background="#D1EDE9")
 
         # 登录按钮 配置
         self.btn_login = tk.Button(self.win)
         self.btn_login.place(relx=0.13, rely=0.6, height=32, width=88)
         self.btn_login.configure(text='登录')
-        self.btn_login.configure(background="#7BC5AE")
+        # self.btn_login.configure(background="#7BC5AE")
 
         # 注册按钮 配置
         self.btn_reg = tk.Button(self.win)
         self.btn_reg.place(relx=0.6, rely=0.6, height=32, width=88)
         self.btn_reg.configure(text='注册')
-        self.btn_reg.configure(background="#7BC5AE")
+        # self.btn_reg.configure(background="#7BC5AE")
 
 # 聊天窗口界面
 # 功能描述：基于tkinter模块搭建，含有其他已登录用户列表显示框、聊天记录显示框、发送消息输入框、发送消息按钮等。
